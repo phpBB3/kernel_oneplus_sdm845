@@ -974,9 +974,6 @@ struct adm_cmd_connect_afe_port_v5 {
 #define INT_FM_TX 0x3005
 #define RT_PROXY_PORT_001_RX	0x2000
 #define RT_PROXY_PORT_001_TX	0x2001
-//MM.Audio, 2019/07/13, add for screen record headset mic path
-#define AFE_LOOPBACK_TX	0x6001
-//end add
 #define DISPLAY_PORT_RX	0x6020
 
 #define AFE_PORT_INVALID 0xFFFF
@@ -3230,6 +3227,14 @@ struct afe_param_id_aptx_sync_mode {
  */
 #define AFE_DECODER_PARAM_ID_DEPACKETIZER_ID        0x00013235
 
+#define CAPI_V2_PARAM_ID_APTX_ENC_SWITCH_TO_MONO    0x0001332A
+
+struct aptx_channel_mode_param_t {
+	struct apr_hdr hdr;
+	struct afe_port_cmd_set_param_v2 param;
+	struct afe_port_param_data_v2 pdata;
+	u32 channel_mode;
+} __packed;
 /*
  * Data format to send compressed data
  * is transmitted/received over Slimbus lines.
@@ -3633,6 +3638,7 @@ union afe_enc_config_data {
 struct afe_enc_config {
 	u32 format;
 	u32 scrambler_mode;
+	u32 mono_mode;
 	union afe_enc_config_data data;
 };
 
@@ -3671,6 +3677,18 @@ struct avs_enc_set_scrambler_param_t {
 	 *  0 : disable scrambler
 	 */
 	uint32_t enable_scrambler;
+};
+
+/*
+ * Payload of the CAPI_V2_PARAM_ID_APTX_ENC_SWITCH_TO_MONO parameter.
+ */
+struct afe_enc_set_channel_mode_param_t {
+	/*
+	*  Supported values:
+	*  1 : mono
+	*  2 : dual_mono
+	*/
+	u32 channel_mode;
 };
 
 /*
@@ -3729,6 +3747,7 @@ union afe_port_config {
 	struct avs_dec_depacketizer_id_param_t    dec_depkt_id_param;
 	struct afe_enc_level_to_bitrate_map_param_t    map_param;
 	struct afe_enc_dec_imc_info_param_t       imc_info_param;
+	struct afe_enc_set_channel_mode_param_t   channel_mode_param;
 } __packed;
 
 struct afe_audioif_config_command_no_payload {
@@ -9457,45 +9476,6 @@ struct afe_spkr_prot_calib_get_resp {
 	struct asm_calib_res_cfg res_cfg;
 } __packed;
 
-#ifdef CONFIG_SND_SOC_MAX98927
-/*Maxim DSM module and parameters IDs*/
-#define AFE_RX_TOPOLOGY_ID_DSM                              0x10001061
-#define AFE_TX_TOPOLOGY_ID_DSM                              0x10001060
-#define AFE_MODULE_DSM_TX                                   0x10001068
-#define AFE_MODULE_DSM_RX                                   0x10001062
-#define AFE_PARAM_ID_DSM_ENABLE                             0x10001063
-#define AFE_PARAM_ID_CALIB                                  0x10001065
-#define AFE_PARAM_ID_DSM_CFG                                0x10001066
-#define AFE_PARAM_ID_DSM_INFO                               0x10001067
-
-#define DSM_RX_PORT_ID      AFE_PORT_ID_QUATERNARY_MI2S_RX
-#define DSM_TX_PORT_ID      AFE_PORT_ID_QUATERNARY_MI2S_TX
-
-struct afe_dsm_param_array {
-    uint32_t    count;
-    uint32_t    flagToWrite;
-    uint32_t    Reserve[2];
-    uint32_t    params[100];
-};
-
-struct afe_dsm_set_command {
-	struct apr_hdr hdr;
-	struct afe_port_cmd_set_param_v2 param;
-	struct afe_port_param_data_v2 pdata;
-} __packed;
-
-struct afe_dsm_get_command {
-	struct apr_hdr hdr;
-	struct afe_port_cmd_get_param_v2 param;
-	struct afe_port_param_data_v2 pdata;
-} __packed;
-
-struct afe_dsm_get_resp {
-	uint32_t status;
-	struct afe_port_param_data_v2 pdata;
-	uint32_t payload[0];
-} __packed;
-#endif
 
 /* SRS TRUMEDIA start */
 /* topology */
